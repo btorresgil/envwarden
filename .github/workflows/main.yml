@@ -1,0 +1,48 @@
+name: CI
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_NAME: vondruska/envwarden
+  
+    steps:
+    - uses: actions/checkout@v1
+    
+    - name: Docker login
+      env:
+        REGISTRY_USER: ${{secrets.REGISTRY_USER}}
+        REGISTRY_PASSWORD: ${{secrets.REGISTRY_PASSWORD}}
+      run: docker login -u "$REGISTRY_USER" -p "$REGISTRY_PASSWORD" 
+    
+    - name: Register QEMU
+      run: docker run --rm --privileged hypriot/qemu-register
+    - name: Set build ID
+      run: |
+        echo ::set-env name=BUILD_ID::$(date +%s)
+    
+      # this probably should be a matrix but with build numbers not being a thing
+      # and matrix creates multiple jobs that don't share context
+      # it makes it hard
+    - name: Build docker image (x64)
+      env:
+        ARCH: amd64
+      run: docker build --pull -f Dockerfile --build-arg ARCH -t "$IMAGE_NAME:$ARCH-$BUILD_ID" .
+
+    - name: Build docker image (arm32v7)
+      env:
+        ARCH: arm32v7
+      run: docker build --pull -f Dockerfile --build-arg ARCH -t "$IMAGE_NAME:$ARCH-$BUILD_ID" .
+
+    - name: Push images
+      run: docker push $IMAGE_NAME
+    
+    - name: Manifest
+      env:
+        DOCKER_CLI_EXPERIMENTAL: enabled
+      if: github.ref == 'refs/heads/master'
+      run: |
+        docker manifest create "$IMAGE_NAME:latest" "$IMAGE_NAME:amd64-$BUILD_ID" "$IMAGE_NAME:arm32v7-$BUILD_ID"
+        docker manifest push "$IMAGE_NAME:latest"
