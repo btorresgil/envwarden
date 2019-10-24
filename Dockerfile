@@ -1,4 +1,5 @@
-FROM node:11-alpine
+ARG ARCH=library
+FROM $ARCH/node:12-alpine
 
 LABEL maintainer="envwarden"
 
