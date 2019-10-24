@@ -1,11 +1,11 @@
 ARG ARCH=library
-FROM $ARCH/node:10-alpine
+FROM $ARCH/node:12-alpine
 
 LABEL maintainer="envwarden"
 
 RUN apk update && apk add bash wget jq
 
-RUN npm install -g @bitwarden/cli
+RUN npm install -g --ignore-scripts @bitwarden/cli
 
 ADD envwarden /usr/local/bin
 
