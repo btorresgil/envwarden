@@ -5,7 +5,7 @@ LABEL maintainer="envwarden"
 
 RUN apk update && apk add bash wget jq
 
-RUN npm install -g --ignore-scripts @bitwarden/cli
+RUN npm install -g --ignore-scripts @bitwarden/cli@1.8.0
 
 ADD envwarden /usr/local/bin
 
